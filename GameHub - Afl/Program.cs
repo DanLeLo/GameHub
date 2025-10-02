@@ -16,7 +16,7 @@ namespace GameHub___Afl
     {
         static void Main(string[] args)
         {
-            Jeopardy();
+            MasterMind();
         }
 
         static void Jeopardy()
@@ -475,6 +475,94 @@ namespace GameHub___Afl
                 return totalPoints;
             }
 
+        }
+
+        static void MasterMind()
+        {
+            //    /*mit program skal indeholde
+            //     * ---Velkomst samt regler--------------------------------------------------------------------------
+            //     * random generator---------------------------------------------------------------------------------
+            //     * spiller må kun skrive 4-cifret tal mellem 1111 og 9999-------------------------------------------
+            //     * spiller har kun 10 forsøg------------------------------------------------------------------------
+            //     * spiller skal have feedback for hvert gæt de har lavet samt antal gæt de har tilbage--------------
+            //     * spiller skal have feedback om de har et rigtigt tal på rigtig plads------------------------------
+            //     * spiller skal have feedback om de har et rigtigt tal på forkert plads
+            //     * jeg skal lave en ui
+            //     */
+
+            int userCodeLenght = 4;
+            int userTry = 1;
+            int maxTry = 11;
+
+
+
+            //Velkomst samt regelsæt
+            Console.WriteLine("Velkommen til mastermind!");
+            Console.WriteLine("Regler: ");
+            Console.WriteLine("Du skal gætte en 4-cifret kode");
+            Console.WriteLine("Du har 10 forsøg til at gætte koden");
+            Console.WriteLine("Får du en sort pin betyder det at du har det rigtige tal på den rigtige plads");
+            Console.WriteLine("Får du en hvid pin betyder det at du har et rigtig tal men forkert plads");
+
+            //random gen
+            Random rnd = new Random();
+            int pcCode = rnd.Next(1111, 9999);
+            //Console.WriteLine(pcCode); // Er kun for at se pckoden HUSK AT SLETTE!!!
+
+            while (userTry < maxTry)
+            {
+                string userInput = Console.ReadLine();
+                int userChoiceAsInt = int.Parse(userInput);
+                if (userChoiceAsInt < 1111 || userChoiceAsInt > 9999)
+                {
+                    Console.WriteLine("Ugyldigt. dit gæt skal være 4-cifret mellem 1-9");
+                    continue;
+                }
+
+                int korrektPlads = 0;
+                int korrektTal = 0;
+
+                //laver både user og pc kode til array
+                char[] userGuess = userInput.ToCharArray();
+                char[] pcArray = pcCode.ToString().ToCharArray();
+                for (int i = 0; i < pcArray.Length; i++)
+                {
+                    if (userGuess[i] == pcArray[i])
+                    {
+                        korrektPlads++;
+                    }
+                }
+                Console.WriteLine($"du har {korrektPlads} tal på rigtig plads");
+                korrektPlads = 0;
+
+                //for (int i = 0; i < pcArray.Length; i++)
+                //{
+                //    if (userGuess[i] == pcCode)// jeg skal have den til at tælle hvor mange rigtige men forkert plads
+                //    {
+                //        korrektTal++;
+                //    }
+                //    Console.WriteLine($"du har {korrektTal} rigtige tal men på forkert plads");
+                //}
+
+
+                if (userInput == pcCode + "")
+                {
+                    Console.WriteLine("Tillykke du har vundet");
+                    break;
+                }
+
+                else
+                {
+
+                    Console.WriteLine($"Du har nu brugt {userTry++} ud af 10 forsøg");
+                    continue;
+                }
+
+            }
+            if (userTry == maxTry)
+            {
+                Console.WriteLine("Desværre du har brugt alle 10 forsøg");
+            }
         }
     }
     
