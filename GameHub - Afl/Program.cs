@@ -74,7 +74,7 @@ namespace GameHub___Afl
 
                     string choice;
 
-                    choice = Console.ReadLine();
+                    choice = Console.ReadLine().ToUpper();
 
                     if (choice == "quit")
                     {
