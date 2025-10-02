@@ -331,10 +331,6 @@ namespace GameHub___Afl
                 Console.Clear();
 
             }
-        }
-
-
-
         static void PrintBoard(Point[,] b)
 
         {
@@ -476,6 +472,10 @@ namespace GameHub___Afl
             }
 
         }
+        }
+
+
+
     }
     
 }
