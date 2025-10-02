@@ -30,6 +30,7 @@ namespace GameHub___Afl
                 Console.WriteLine("1. mastermind");
                 Console.WriteLine("2. jeopardy");
                 Console.WriteLine("3. Chess");
+                Console.WriteLine("4. BattleShip");
 
                 switch (Console.ReadLine().ToLower())
                 {
@@ -50,6 +51,12 @@ namespace GameHub___Afl
                             Chess();
                             break;
                         }
+                    case "4": {
+                            Console.Clear();
+                            BattleShip();
+                            break;
+                        }
+
                     case "quit":
                         {
                             return;
@@ -606,7 +613,6 @@ namespace GameHub___Afl
         /// <summary>
         /// 
         /// Chess - aflevering
-        /// af Johan k. Nielsen
         /// 
         /// </summary>
 
@@ -905,6 +911,430 @@ namespace GameHub___Afl
             }
             //Return
             return value;
+        }
+
+
+        //Battleship
+
+        static GameState state;
+
+        static int gridWidth = 8;
+        static int gridHeight = 8;
+
+
+
+        enum ShipType : byte {
+            None = 0,
+            Destroyer = 1,
+            Submarine = 2,
+            Cruiser = 3,
+            Battleship = 4,
+            Carrier = 5
+        }
+
+        struct Cell {
+            public bool shot;
+            public ShipType ship;
+
+        }
+
+        static Cell[] playerBoard = new Cell[gridWidth * gridHeight];
+
+        static Cell[] enemyBoard = new Cell[gridWidth * gridHeight];
+
+        enum GameState {
+            Initialize,
+            PlayerTurn,
+            RoboTurn,
+            PlayerWon,
+            RoboWon,
+            Quit,
+        }
+
+
+
+        static void ConcludeResult(string message) {
+            Console.Clear();
+            PrintBoard();
+            Console.Write(message);
+            Console.Write(" Would you like to play again? y/n: ");
+            switch (Console.ReadLine().ToLower()) {
+                case "no":
+                case "n":
+                case "quit":
+                    state = GameState.Quit; break;
+                case "y":
+                case "yes":
+                    state = GameState.Initialize; break;
+            }
+        }
+
+
+
+        static bool Shoot(Cell[] board, int coordinate) {
+            if (!board[coordinate].shot) {
+                board[coordinate].shot = true;
+                return true;
+            }
+            return false;
+        }
+
+        static void BattleShip() {
+            state = GameState.Initialize;
+            while (state != GameState.Quit) {
+                switch (state) {
+                    case GameState.Initialize:
+                        Console.Clear();
+                        MakeLevel(playerBoard);
+                        MakeLevel(enemyBoard);
+                        if (IsDefeated(enemyBoard) || IsDefeated(playerBoard)) {
+                            Console.WriteLine("One of the boards are empty. An error during board gen has occured.");
+                            PressKeyToContinue();
+                            state = GameState.Quit;
+                            break;
+                        }
+                        state = GameState.PlayerTurn;
+                        break;
+                    case GameState.PlayerTurn:
+                        ClearLog();
+                        PlayerTurn();
+                        Update();
+                        PressKeyToContinue();
+                        break;
+                    case GameState.RoboTurn:
+                        ClearLog();
+                        RoboTurn();
+                        Update();
+                        PressKeyToContinue();
+                        break;
+                    case GameState.RoboWon:
+                        ConcludeResult("You lost!");
+                        break;
+                    case GameState.PlayerWon:
+                        ConcludeResult("You won!");
+                        break;
+                    default:
+                        state = GameState.Quit;
+                        break;
+
+                }
+            }
+        }
+
+
+        static string CoordinateToString(int coordinate) {
+            return ColumnToString(coordinate / gridHeight) + RowToString(coordinate % gridWidth);
+
+        }
+
+        static string RowToString(int row) {
+            return (row + 1).ToString();
+        }
+
+        static string ColumnToString(int column) {
+            return ((char)('A' + column)).ToString();
+        }
+
+
+
+
+
+        static bool PlaceShipHorizontal(Cell[] board, ShipType ship, int row, int column, int length) {
+            if (column + length > gridWidth) return false;
+
+            for (int i = 0; i < length; i++) {
+                int index = row * gridWidth + (column + i);
+                if (board[index].ship != ShipType.None)
+                    return false;
+            }
+
+            for (int i = 0; i < length; i++) {
+                int index = row * gridWidth + (column + i);
+                board[index].ship = ship;
+            }
+
+            return true;
+        }
+
+        static bool PlaceShipVertical(Cell[] board, ShipType ship, int row, int column, int length) {
+
+            if (row + length > gridHeight) return false;
+
+
+            for (int i = 0; i < length; i++) {
+                int index = (row + i) * gridWidth + column;
+                if (board[index].ship != ShipType.None)
+                    return false;
+            }
+
+
+            for (int i = 0; i < length; i++) {
+                int index = (row + i) * gridWidth + column;
+                board[index].ship = ship;
+            }
+
+            return true;
+        }
+
+        static bool PlaceShip(Cell[] board, ShipType ship, int row, int col, int direction, int length) {
+            int coordinate = GetCoordinate(row, col);
+            if (direction == 0) {
+                return PlaceShipHorizontal(board, ship, row, col, length);
+            }
+            return PlaceShipVertical(board, ship, row, col, length);
+        }
+
+        static bool PlaceShip(Cell[] board, ShipType ship, Random random, int length) {
+            int col = random.Next(gridWidth);
+            int row = random.Next(gridHeight);
+            int direction = 0;
+            return PlaceShip(board, ship, row, col, direction, length);
+        }
+
+        static void GenerateShip(Cell[] board, ShipType ship, int length) {
+            if (length < 0) return;
+            Random random = new Random();
+            for (int i = 0; i < 1000 && !PlaceShip(board, ship, random, length); i++) ;
+        }
+
+        static void MakeLevel(Cell[] board) {
+            for (int i = 0; i < board.Length; i++) {
+                board[i].shot = false;
+                board[i].ship = ShipType.None;
+            }
+
+            GenerateShip(board, ShipType.Destroyer, 2);
+            GenerateShip(board, ShipType.Submarine, 3);
+            GenerateShip(board, ShipType.Cruiser, 3);
+            GenerateShip(board, ShipType.Battleship, 4);
+            GenerateShip(board, ShipType.Carrier, 5);
+        }
+
+        static bool IsDefeated(Cell[] board) {
+            for (int i = 0; i < board.Length; i++) {
+                if (!board[i].shot && board[i].ship != ShipType.None) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        static List<string> actionLog = new List<string>();
+
+        static void Log(string message) {
+            actionLog.Add(message);
+        }
+
+        static void ClearLog() {
+            actionLog.Clear();
+        }
+
+        static void PrintLog() {
+            foreach (var line in actionLog) {
+                Console.WriteLine(line);
+            }
+        }
+
+        static void Update() {
+            Console.Clear();
+            PrintBoard();
+            PrintLog();
+        }
+
+        static void PressKeyToContinue() {
+            Console.WriteLine("Press Key To Continue");
+            Console.ReadKey();
+        }
+
+        static bool TryParseCoordinate(string input, out int row, out int column) {
+            row = -1;
+            column = -1;
+
+            input = input.Trim().ToUpper();
+
+            if (input.Length < 2) {
+                Log("Input must have at least 2 characters!");
+                return false;
+            }
+
+            char columnChar = input[0];
+            column = columnChar - 'A';
+            if (column < 0 || column >= gridWidth) {
+                Log("Column must be between " + ColumnToString(0) + " and " + ColumnToString(gridWidth - 1));
+                return false;
+            }
+
+            if (!int.TryParse(input.Substring(1), out row)) {
+                Log("Row must be a number!");
+                return false;
+            }
+
+            row -= 1;
+            if (row < 0 || row >= gridHeight) {
+                Log("Row must be between " + RowToString(0) + " and " + RowToString(gridHeight - 1));
+                return false;
+            }
+            return true;
+        }
+        static void PlayerTurn() {
+            Log("Choice: ");
+            Update();
+            string input = Console.ReadLine().Trim().ToUpper();
+            if (input == "QUIT") {
+                state = GameState.Quit;
+                return;
+            }
+            if (input == "RESTART") {
+                state = GameState.Initialize;
+                return;
+            }
+            if (TryParseCoordinate(input, out int row, out int column)) {
+                int shot = GetCoordinate(row, column);
+                if (!Shoot(enemyBoard, shot)) {
+                    Log(CoordinateToString(shot) + " has already been shot");
+                    return;
+                }
+                if (IsDefeated(enemyBoard)) {
+                    state = GameState.PlayerWon;
+                } else {
+                    state = GameState.RoboTurn;
+                }
+                if (enemyBoard[shot].ship != ShipType.None) {
+                    Log("Hit");
+                } else {
+                    Log("You missed");
+                }
+            }
+        }
+
+
+        static void RoboTurn() {
+            int roboShot;
+            do {
+                Random random = new Random();
+                roboShot = random.Next(playerBoard.Length);
+            } while (!Shoot(playerBoard, roboShot));
+            if (IsDefeated(playerBoard)) {
+                state = GameState.RoboWon;
+            } else {
+                state = GameState.PlayerTurn;
+            }
+            if (playerBoard[roboShot].ship != ShipType.None) {
+                Log("Robo hit: " + CoordinateToString(roboShot));
+            } else {
+                Log("Robo hit " + CoordinateToString(roboShot));
+            }
+        }
+
+
+
+        static int GetCoordinate(int row, int column) {
+            return row * gridWidth + column;
+        }
+
+        static void PlaceShip(bool[] ships, int row, int column) {
+            if (InGrid(row, column)) {
+                ships[GetCoordinate(row, column)] = true;
+            }
+        }
+
+        static bool InGrid(int row, int column) {
+            return !(row < 0 || row >= gridWidth || column < 0 || column >= gridWidth);
+        }
+
+
+
+
+        static void PrintSpace(int dist) {
+            for (int i = 0; i < dist; i++) {
+                Console.Write(" ");
+            }
+        }
+
+
+        static string[] shipTexts = { "  ", "D ", "S ", "C ", "B ", "A " };
+
+        static string WithBackgroundRGB(int r, int g, int b, string text) //Source: GPT
+        {
+            return $"\x1b[48;2;{r};{g};{b}m{text}\x1b[0m";
+        }
+
+        static void PrintShip(ShipType type) {
+            int i = (int)type;
+            if (i == 0) {
+                Console.Write(shipTexts[i]);
+            } else {
+                Console.Write(WithBackgroundRGB(10, 170 + i * 20, 30, shipTexts[i]));
+            }
+        }
+
+        static void PrintHit() {
+            Console.BackgroundColor = ConsoleColor.DarkRed;
+            Console.Write("X ");
+            Console.ResetColor();
+        }
+
+        static void PrintMiss() {
+            Console.BackgroundColor = ConsoleColor.Blue;
+            Console.Write("X ");
+        }
+
+        static void PrintWater() {
+
+            Console.Write("  ");
+        }
+
+        static void PrintColumn() {
+            Console.Write("  ");
+            for (int column = 0; column < gridWidth; column++) {
+                Console.Write(ColumnToString(column) + " ");
+            }
+        }
+
+        static void PrintRows(Cell[] board, int row, bool playerBoard) {
+            Console.Write(RowToString(row).PadLeft(2));
+            for (int column = 0; column < gridWidth; column++) {
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+                Console.ForegroundColor = ConsoleColor.Black;
+                int index = GetCoordinate(row, column);
+                if (board[index].shot) {
+                    if (board[index].ship != ShipType.None) {
+                        PrintHit();
+                    } else {
+                        PrintMiss();
+                    }
+                } else {
+                    if (playerBoard) {
+                        PrintShip(board[index].ship);
+                    } else {
+                        PrintWater();
+                    }
+                }
+                Console.ResetColor();
+            }
+        }
+
+        static void PrintPlayerName(string name) {
+
+        }
+
+
+
+        static void PrintBoard() {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            int space = 10;
+            Console.ResetColor();
+            PrintColumn();
+            PrintSpace(space);
+            PrintColumn();
+            Console.WriteLine();
+            for (int i = 0; i < gridHeight; i++) {
+                PrintRows(playerBoard, i, true);
+                PrintSpace(space);
+                PrintRows(enemyBoard, i, false);
+                Console.WriteLine();
+            }
+            Console.WriteLine();
         }
 
 
