@@ -29,6 +29,8 @@ namespace GameHub___Afl
                 Console.WriteLine("vælg en");
                 Console.WriteLine("1. mastermind");
                 Console.WriteLine("2. jeopardy");
+                Console.WriteLine("3. Chess");
+
                 switch (Console.ReadLine().ToLower())
                 {
                     case "1":
@@ -41,6 +43,11 @@ namespace GameHub___Afl
                         {
                             Console.Clear();
                             Jeopardy();
+                            break;
+                        }
+                    case "3": {
+                            Console.Clear();
+                            Chess();
                             break;
                         }
                     case "quit":
@@ -594,6 +601,313 @@ namespace GameHub___Afl
                 Console.WriteLine("Desværre du har brugt alle 10 forsøg");
             }
         }
+
+
+        /// <summary>
+        /// 
+        /// Chess - aflevering
+        /// af Johan k. Nielsen
+        /// 
+        /// </summary>
+
+        //Variables
+        public static bool IsRunning = true;
+
+        //String
+        private static string info_intro = "Current player: ", info_playgame = "Arrow keys to move\npress enter to select\nESC stops the game";
+
+        //Chess board
+        public static ChessPieces[,] ChessBoard = new ChessPieces[8, 8]; //8x8
+        private static int ChessXY_Lenght = 7; //8 long (0 is first index)
+
+        //Chess pieces
+        public enum ChessPieces {
+            Empty = 0,
+            b_Pawn, b_Knight, b_Bishop, b_Rook, b_Queen, b_King,
+            w_Pawn, w_Knight, w_Bishop, w_Rook, w_Queen, w_King
+        }
+
+        //fill in Top/Bottom row
+        public static string[] TB_Chesspieces = { "_Rook", "_Knight", "_Bishop", "_Queen", "_King", "_Bishop", "_Knight", "_Rook" };
+
+        //Cursor
+        public enum CursorAction { Up, Down, Left, Right, Enter, Escape, None }
+        public static int Cursor_x, Cursor_y;
+
+        //Selected
+        public static int Selected_x = -1, Selected_y = -1;
+
+        //Player data
+        public static bool IsPlayerOne = true;
+
+        public static void Chess() {
+            //Generate chess board
+            InitChessBoard();
+            //Game loop
+            while (IsRunning) {
+                DrawChessBoard();
+                InfoPrint();
+                PlayerController();
+            }
+        }
+
+        private static void InfoPrint() {
+            Print($"Cursor X: {Cursor_x} Y: {Cursor_y}");
+            Print($"Selected X: {Selected_x} Y: {Selected_y}");
+
+        }
+
+        //Setup chessboard
+        public static void InitChessBoard() {
+            //Y loop
+            for (int y = 0; y <= ChessXY_Lenght; y++) {
+                //X loop
+                for (int x = 0; x <= ChessXY_Lenght; x++) {
+                    if (y == 0 || y == ChessXY_Lenght) { //First and last row?
+                        char _type = (y == 0) ? 'b' : 'w';
+                        //Parse chess piece from string array
+                        ChessPieces _p = (ChessPieces)Enum.Parse(typeof(ChessPieces), $"{_type}{TB_Chesspieces[x]}", true);
+                        ChessBoard[x, y] = _p;
+                    } else if (y == 1) {
+                        ChessBoard[x, y] = ChessPieces.b_Pawn;
+                    } else if (y == ChessXY_Lenght - 1 || y == ChessXY_Lenght) {
+                        ChessBoard[x, y] = ChessPieces.w_Pawn;
+                    } else {
+                        ChessBoard[x, y] = ChessPieces.Empty; //Empty
+                    }
+                }
+            }
+        }
+
+        //Draws chessboard
+        private static void DrawChessBoard() {
+            //Set output to work with emojis / symbols
+            Console.OutputEncoding = System.Text.Encoding.Unicode;
+            //Clear board
+            Console.Clear();
+            //Start message
+            Print(info_intro + ((IsPlayerOne) ? "Black" : "White"));
+            //Print colm index
+            Print("  A B C D E F G H");
+            //Y loop
+            for (int y = 0; y <= ChessXY_Lenght; y++) {
+                //write row index
+                Console.BackgroundColor = ConsoleColor.Black;
+                Write(y + 1 + " ");
+                //X loop
+                for (int x = 0; x <= ChessXY_Lenght; x++) {
+                    //Checkerboard pattern
+                    if ((y + x) % 2 == 1) {
+                        Console.BackgroundColor = ConsoleColor.Black;
+                    } else {
+                        Console.BackgroundColor = ConsoleColor.White;
+                    }
+                    //Get custom color (magenta is null)
+                    if (GetBoardColor(x, y) != ConsoleColor.Magenta) {
+                        Console.BackgroundColor = GetBoardColor(x, y);
+                    }
+                    //Write output
+                    string _output = GetBoardPiece(x, y);
+                    Write(_output);
+                }
+                //End of x loop, print board (new line)
+                Print("");
+            }
+            //Reset color at end of loop
+            Console.BackgroundColor = ConsoleColor.Black;
+            //Write message to player
+            Print(info_playgame);
+        }
+
+        //Retrives the relevant board piece
+        public static string GetBoardPiece(int _x, int _y) {
+            switch (ChessBoard[_x, _y]) {
+                case ChessPieces.b_Pawn:
+                    return "♟ ";
+                case ChessPieces.w_Pawn:
+                    return "♙ ";
+                case ChessPieces.b_Knight:
+                    return "♞ ";
+                case ChessPieces.w_Knight:
+                    return "♘ ";
+                case ChessPieces.b_Bishop:
+                    return "♝ ";
+                case ChessPieces.w_Bishop:
+                    return "♗ ";
+                case ChessPieces.b_Rook:
+                    return "♜ ";
+                case ChessPieces.w_Rook:
+                    return "♖ ";
+                case ChessPieces.b_Queen:
+                    return "♛ ";
+                case ChessPieces.w_Queen:
+                    return "♕ ";
+                case ChessPieces.b_King:
+                    return "♚ ";
+                case ChessPieces.w_King:
+                    return "♔ ";
+
+                default:
+                    return "  ";
+            }
+        }
+
+        //Color chessboard
+        public static ConsoleColor GetBoardColor(int x, int y) {
+            //Set cusor color
+
+            //Selected position
+            if (x == Selected_x && y == Selected_y) {
+                return ConsoleColor.DarkGreen;
+            }
+
+            //Cursor
+            if (x == Cursor_x && y == Cursor_y) {
+                //Valid piece highlight / invalid
+                if ((IsPlayerOne && ChessBoard[x, y].ToString().StartsWith("b")) || (!IsPlayerOne && ChessBoard[x, y].ToString().StartsWith("w"))) {
+                    if (Selected_x != -1 && Selected_y != -1) {
+                        return ConsoleColor.Green; //Already has peice
+                    } else {
+                        return ConsoleColor.DarkGreen; //Valid
+                    }
+                }
+
+                //Can move to here color
+                if (Selected_x != -1 && Selected_y != -1) {
+                    if (ChessBoard[x, y] == ChessPieces.Empty ||
+                       (!IsPlayerOne && ChessBoard[x, y].ToString().StartsWith("b")) ||
+                       (IsPlayerOne && ChessBoard[x, y].ToString().StartsWith("w"))) {
+                        return ConsoleColor.Green;
+                    }
+                }
+
+                //Normal color
+                return ConsoleColor.DarkRed;
+            }
+
+            return ConsoleColor.Magenta; //None output color
+        }
+
+        //Player handler
+        public static void PlayerController() {
+            CursorAction cursorAction = ActiveInput();
+            if (cursorAction == CursorAction.Escape) {
+                IsRunning = false; //Stop game after pressing escape
+            } else if (cursorAction == CursorAction.Enter) { //Select 
+                CursorSelect(); //Win condition is nested here
+            } else { //Default, just moves cursor around and clamps position
+                MoveCursor(cursorAction);
+            }
+
+        }
+
+        //Cursor select piece
+        private static void CursorSelect() {
+            //Validate choice
+            if ((IsPlayerOne && ChessBoard[Cursor_x, Cursor_y].ToString().StartsWith("b")) ||
+                (!IsPlayerOne && ChessBoard[Cursor_x, Cursor_y].ToString().StartsWith("w"))) {
+                Selected_x = Cursor_x; //Set value
+                Selected_y = Cursor_y; //Set value
+            }
+            //Selected cant be -1, and x or y need to be different
+            if ((Selected_x != -1 && Selected_x != Cursor_x) || (Selected_y != -1 && Selected_y != Cursor_y)) { //move piece to
+                if (ChessBoard[Cursor_x, Cursor_y] == ChessPieces.Empty ||
+                        (!IsPlayerOne && ChessBoard[Cursor_x, Cursor_y].ToString().StartsWith("b")) ||
+                        (IsPlayerOne && ChessBoard[Cursor_x, Cursor_y].ToString().StartsWith("w"))) {
+                    //Player win????
+                    if (Win() != "") {
+                        Print(Win());
+                        IsRunning = false; //Stop game
+                    }
+
+                    //Move selected to cursor
+                    ChessBoard[Cursor_x, Cursor_y] = ChessBoard[Selected_x, Selected_y];
+                    //Delete selected from board
+                    ChessBoard[Selected_x, Selected_y] = ChessPieces.Empty;
+                    //Reset seletion
+                    Selected_x = -1;
+                    Selected_y = -1;
+
+                    //Change player
+                    IsPlayerOne = !IsPlayerOne;
+                }
+            }
+        }
+
+        //Check for win
+        private static string Win() {
+            if (IsPlayerOne && ChessBoard[Cursor_x, Cursor_y] == ChessPieces.w_King) { //Player one win
+                return "Checkmate\nBlack wins!";
+            }
+            if (!IsPlayerOne && ChessBoard[Cursor_x, Cursor_y] == ChessPieces.b_King) { //Player two win
+                return "Checkmate\nWhite wins!";
+            }
+            return "";
+        }
+
+        //Cursor
+        public static void MoveCursor(CursorAction _action) {
+            switch (_action) {
+                case CursorAction.Up:
+                    Cursor_y--;
+                    break;
+                case CursorAction.Down:
+                    Cursor_y++;
+                    break;
+                case CursorAction.Left:
+                    Cursor_x--;
+                    break;
+                case CursorAction.Right:
+                    Cursor_x++;
+                    break;
+            }
+            //Clamp
+            Cursor_x = ClampedValue(Cursor_x);
+            Cursor_y = ClampedValue(Cursor_y);
+        }
+
+        //Player text input
+        public static CursorAction ActiveInput() {
+            ConsoleKey _key = Console.ReadKey().Key; //Get active key input
+            switch (_key) {
+                case ConsoleKey.UpArrow:
+                    return CursorAction.Up;
+                case ConsoleKey.DownArrow:
+                    return CursorAction.Down;
+                case ConsoleKey.LeftArrow:
+                    return CursorAction.Left;
+                case ConsoleKey.RightArrow:
+                    return CursorAction.Right;
+                case ConsoleKey.Enter:
+                    return CursorAction.Enter;
+                case ConsoleKey.Escape:
+                    return CursorAction.Escape;
+                default:
+                    return CursorAction.None;
+            }
+        }
+
+        //Simple print command
+        private static void Print(string _output) {
+            Console.WriteLine(_output);
+        }
+        //Simple write command
+        private static void Write(string _output) {
+            Console.Write(_output);
+        }
+
+        //Clamp
+        public static int ClampedValue(int value, int max = 7, int min = 0) {
+            if (value > max) {
+                return max;
+            } else if (value < min) {
+                return min;
+            }
+            //Return
+            return value;
+        }
+
+
     }
-    
+
 }
