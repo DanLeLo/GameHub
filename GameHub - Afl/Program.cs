@@ -16,9 +16,42 @@ namespace GameHub___Afl
     {
         static void Main(string[] args)
         {
-            MasterMind();
+            Menu();
         }
+        static void Menu()
+        {
+       
+            string choice;
+            while (true)
+            {
 
+                Console.Clear();
+                Console.WriteLine("vælg en");
+                Console.WriteLine("1. mastermind");
+                Console.WriteLine("2. jeopardy");
+                switch (Console.ReadLine().ToLower())
+                {
+                    case "1":
+                        {
+                            Console.Clear();
+                            MasterMind();
+                            break;
+                        }
+                    case "2":
+                        {
+                            Console.Clear();
+                            Jeopardy();
+                            break;
+                        }
+                    case "quit":
+                        {
+                            return;
+                        }
+                }
+
+            }
+        
+        }
         static void Jeopardy()
         {
             string[] answersFootball =
@@ -472,12 +505,7 @@ namespace GameHub___Afl
             }
 
         }
-<<<<<<< HEAD
         }
-
-
-
-=======
 
         static void MasterMind()
         {
@@ -566,7 +594,6 @@ namespace GameHub___Afl
                 Console.WriteLine("Desværre du har brugt alle 10 forsøg");
             }
         }
->>>>>>> 65499febd49423db9dd2eae4856d9e0b114086d7
     }
     
 }
